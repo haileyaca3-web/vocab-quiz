@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>단어 시험</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;min-height:100vh;display:flex;justify-content:center;padding:1rem;}
+.app{width:100%;max-width:420px;}
+.badge{font-size:12px;color:#888;margin-bottom:4px;}
+.title{font-size:20px;font-weight:600;color:#111;margin-bottom:1rem;}
+.card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:1.25rem;margin-bottom:10px;}
+.label{font-size:12px;color:#888;margin-bottom:6px;}
+.qword{font-size:22px;font-weight:600;color:#111;}
+.qword.sm{font-size:18px;}
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:1rem;}
+.opt{background:#fff;border:1px solid #ddd;border-radius:8px;padding:13px 16px;font-size:15px;color:#111;cursor:pointer;text-align:left;transition:background 0.15s;}
+.opt:hover:not(:disabled){background:#f5f5f5;}
+.opt.ok{background:#EAF3DE;border-color:#639922;color:#3B6D11;}
+.opt.no{background:#FCEBEB;border-color:#A32D2D;color:#791F1F;}
+.tinput{width:100%;border:1px solid #ddd;border-radius:8px;padding:12px 16px;font-size:16px;color:#111;background:#fff;margin-top:1rem;outline:none;}
+.tinput:focus{border-color:#1D9E75;}
+.sbtn{width:100%;margin-top:8px;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:15px;color:#111;cursor:pointer;}
+.sbtn:hover{background:#f5f5f5;}
+.fb{font-size:14px;margin-top:8px;padding:8px 12px;border-radius:8px;}
+.fb.ok{background:#EAF3DE;color:#3B6D11;}
+.fb.no{background:#FCEBEB;color:#791F1F;}
+.nav{display:flex;justify-content:space-between;align-items:center;margin-top:1rem;}
+.nbtn{background:#fff;border:1px solid #ddd;border-radius:8px;padding:10px 20px;font-size:14px;color:#111;cursor:pointer;}
+.nbtn:hover:not(:disabled){background:#f5f5f5;}
+.nbtn:disabled{opacity:0.3;cursor:default;}
+.pbar{background:#eee;border-radius:999px;height:6px;margin:10px 0;overflow:hidden;}
+.pfill{height:100%;background:#1D9E75;border-radius:999px;transition:width 0.3s;}
+.tbar-wrap{margin:6px 0 4px;}
+.tbar{background:#eee;border-radius:999px;height:8px;overflow:hidden;}
+.tfill{height:100%;border-radius:999px;transition:width 1s linear;}
+.ttext{font-size:12px;color:#888;margin-bottom:4px;}
+.srow{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:1rem 1.25rem;margin-bottom:10px;width:100%;text-align:left;cursor:pointer;}
+.srow.req{border-color:#1D9E75;}
+.stop{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;}
+.sname{font-size:15px;font-weight:600;color:#111;}
+.sbadge{font-size:11px;padding:3px 8px;border-radius:999px;}
+.sbadge.r{background:#E1F5EE;color:#0F6E56;}
+.sbadge.o{background:#f0f0f0;color:#888;}
+.sdesc{font-size:13px;color:#888;}
+.togwrap{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.tog{position:relative;width:36px;height:20px;display:inline-block;}
+.tog input{opacity:0;width:0;height:0;}
+.sl{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:999px;transition:0.2s;}
+.sl:before{position:absolute;content:"";height:14px;width:14px;left:3px;bottom:3px;background:white;border-radius:50%;transition:0.2s;}
+input:checked+.sl{background:#1D9E75;}
+input:checked+.sl:before{transform:translateX(16px);}
+.full-btn{width:100%;margin-top:8px;background:#fff;border:1px solid #ddd;border-radius:8px;padding:14px;font-size:15px;font-weight:600;color:#111;cursor:pointer;}
+.full-btn:hover{background:#f5f5f5;}
+.scramble{font-size:22px;font-weight:600;color:#185FA5;letter-spacing:4px;margin-top:8px;}
+.res-big{font-size:48px;font-weight:700;color:#111;}
+.sresrow{display:flex;justify-content:space-between;font-size:14px;padding:8px 0;border-bottom:1px solid #eee;}
+.wrong-list{font-size:13px;color:#A32D2D;margin-top:4px;line-height:1.7;}
+.saving{font-size:13px;color:#888;text-align:center;padding:8px;}
+.unit-btn{display:block;width:100%;text-align:left;}
+</style>
+</head>
+<body>
+<div class="app"><div id="root"></div></div>
+<script>
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxmAKVf0x4D3WfQAkepaWvnYODrpbtKpQxCjtBc8mpXz0sFe6Wzroed6PSmHGse4Tj03Q/exec';
+
+const UNITS=[
+  {id:1,name:'DAY 01',desc:'부정, 반대',words:[
+    {en:'unfair',ko:'불공평한, 부당한'},{en:'unknown',ko:'알려지지 않은, 미지의'},
+    {en:'unfortunate',ko:'운이 없는, 불행한'},{en:'unwanted',ko:'원치 않는, 바람직하지 못한'},
+    {en:'unexpected',ko:'예기치 않은, 뜻밖의'},{en:'unforgettable',ko:'잊을 수 없는'},
+    {en:'unbearable',ko:'참을 수 없는'},{en:'unlock',ko:'열다, 자물쇠를 풀다'},
+    {en:'antibody',ko:'항체'},{en:'antibiotic',ko:'항생제, 항생물질'},
+    {en:'contrary',ko:'반대되는, 반대'},{en:'contradict',ko:'반박하다, 모순되다'},
+    {en:'contrast',ko:'대조하다, 대조'},{en:'controversy',ko:'논란, 논쟁'},
+    {en:'counterattack',ko:'역습하다, 반격'},{en:'misfortune',ko:'불운, 불행'},
+    {en:'misdeed',ko:'나쁜 짓, 악행'},{en:'misbehave',ko:'못된 짓을 하다'},
+    {en:'misunderstand',ko:'오해하다'},{en:'mislead',ko:'잘못 인도하다, 속이다'},
+  ]},
+];
+
+const STAGE_DEFS=[
+  {id:1,name:'Stage 1',desc:'영어 → 한국어 객관식',req:true,mc:true},
+  {id:2,name:'Stage 2',desc:'한국어 → 영어 객관식',req:true,mc:true},
+  {id:3,name:'Stage 3',desc:'한국어 → 영어 타이핑',req:false,mc:false},
+  {id:4,name:'Stage 4',desc:'Unscramble 타이핑',req:false,mc:false},
+];
+
+function scramble(w){
+  const a=w.toUpperCase().split('');
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a.join('')===w.toUpperCase()?scramble(w):a.join('');
+}
+function shuffle(a){return[...a].sort(()=>Math.random()-0.5);}
+function getWrong(words,cur,field){
+  return shuffle(words.filter(w=>w[field]!==cur[field])).slice(0,3).map(w=>w[field]);
+}
+
+let S={screen:'login',name:'',num:'',unit:null,opt3:false,opt4:false,stages:[],stageIdx:0,qIdx:0,answers:{},feedback:{},scrambles:{},stageScores:{},wrongWords:{},timer:null,timeLeft:0,maxTime:0,_ts:false};
+
+function startTimer(sec){
+  clearInterval(S.timer);
+  S.timeLeft=sec;S.maxTime=sec;
+  updateTimerUI();
+  S.timer=setInterval(()=>{
+    S.timeLeft--;updateTimerUI();
+    if(S.timeLeft<=0){
+      clearInterval(S.timer);
+      const sid=S.stages[S.stageIdx];
+      const w=UNITS.find(u=>u.id===S.unit).words[S.qIdx];
+      if(!S.feedback[S.qIdx]){
+        S.answers[S.qIdx]='';S.feedback[S.qIdx]='wrong';
+        if(!S.wrongWords[sid])S.wrongWords[sid]=[];
+        S.wrongWords[sid].push(w.en);
+        S._ts=false;render();
+      }
+    }
+  },1000);
+}
+function updateTimerUI(){
+  const el=document.getElementById('tfill');
+  const tt=document.getElementById('ttime');
+  if(el){
+    el.style.width=Math.round((S.timeLeft/S.maxTime)*100)+'%';
+    const p=S.timeLeft/S.maxTime;
+    el.style.background=p>0.5?'#1D9E75':p>0.25?'#BA7517':'#E24B4A';
+  }
+  if(tt)tt.textContent=S.timeLeft+'초';
+}
+
+function saveResult(){
+  const allWrong=Object.values(S.wrongWords).flat();
+  const totalScore=Object.values(S.stageScores).reduce((a,b)=>a+b,0);
+  fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({
+    name:S.name,number:S.num,
+    unit:'DAY '+String(S.unit).padStart(2,'0'),
+    stage:S.stages.join(','),
+    score:totalScore,
+    wrongWords:[...new Set(allWrong)],
+  })}).catch(()=>{});
+}
+
+function calcScore(){
+  const words=UNITS.find(u=>u.id===S.unit).words;
+  const sid=S.stages[S.stageIdx];
+  let c=0;
+  words.forEach((w,i)=>{
+    const ans=(S.answers[i]||'').trim().toLowerCase();
+    if(sid===1&&ans===w.ko)c++;
+    else if((sid===2||sid===3||sid===4)&&ans===w.en.toLowerCase())c++;
+  });
+  return c;
+}
+
+function nextStage(){
+  clearInterval(S.timer);
+  const score=calcScore();
+  const sid=S.stages[S.stageIdx];
+  S.stageScores[sid]=score;
+  if(S.stageIdx<S.stages.length-1){
+    S.stageIdx++;S.qIdx=0;S.answers={};S.feedback={};S._ts=false;render();
+  } else {
+    saveResult();S.screen='result';render();
+  }
+}
+
+function render(){
+  const root=document.getElementById('root');
+  if(S.screen==='login'){
+    root.innerHTML=`
+      <div style="padding-top:2rem">
+      <div class="badge">단어 시험</div>
+      <div class="title">로그인</div>
+      <div class="card">
+        <div class="label">이름</div>
+        <input class="tinput" style="margin-top:0" type="text" id="iname" placeholder="홍길동" value="${S.name}">
+        <div class="label" style="margin-top:12px">번호 <span style="color:#aaa;font-size:11px">(동명이인은 뒷번호 입력)</span></div>
+        <input class="tinput" style="margin-top:0" type="text" id="inum" placeholder="예: 15" value="${S.num}">
+      </div>
+      <button class="full-btn" onclick="doLogin()">다음</button>
+      </div>
+    `;
+    return;
+  }
+  if(S.screen==='unit'){
+    root.innerHTML=`
+      <div style="padding-top:2rem">
+      <div class="badge">${S.name} (${S.num}번)</div>
+      <div class="title">유닛 선택</div>
+      ${UNITS.map(u=>`
+        <button class="srow unit-btn" onclick="S.unit=${u.id};S.screen='setup';render()">
+          <div class="sname">${u.name}</div>
+          <div class="sdesc">${u.desc}</div>
+        </button>
+      `).join('')}
+      </div>
+    `;
+    return;
+  }
+  if(S.screen==='setup'){
+    root.innerHTML=`
+      <div style="padding-top:2rem">
+      <div class="badge">${S.name} · DAY ${String(S.unit).padStart(2,'0')}</div>
+      <div class="title">단계 선택</div>
+      ${STAGE_DEFS.map(s=>`
+        <div class="srow ${s.req?'req':''}">
+          <div class="stop">
+            <span class="sname">${s.name}</span>
+            <span class="sbadge ${s.req?'r':'o'}">${s.req?'기본':'선택'}</span>
+          </div>
+          <div class="sdesc">${s.desc}</div>
+          ${!s.req?`<div class="togwrap">
+            <label class="tog"><input type="checkbox" id="tog${s.id}" onchange="S.opt${s.id}=this.checked"><span class="sl"></span></label>
+            <span style="font-size:13px;color:#888">포함하기</span>
+          </div>`:''}
+        </div>
+      `).join('')}
+      <button class="full-btn" onclick="doStart()">시험 시작</button>
+      </div>
+    `;
+    if(document.getElementById('tog3'))document.getElementById('tog3').checked=S.opt3;
+    if(document.getElementById('tog4'))document.getElementById('tog4').checked=S.opt4;
+    return;
+  }
+  if(S.screen==='result'){
+    const unit=UNITS.find(u=>u.id===S.unit);
+    const total=unit.words.length;
+    const grand=Object.values(S.stageScores).reduce((a,b)=>a+b,0);
+    const grandMax=S.stages.length*total;
+    const allWrong=[...new Set(Object.values(S.wrongWords).flat())];
+    root.innerHTML=`
+      <div style="padding-top:2rem">
+      <div class="badge">DAY ${String(S.unit).padStart(2,'0')} · 결과</div>
+      <div class="title">${S.name} (${S.num}번)</div>
+      <div class="card" style="text-align:center">
+        <div class="res-big">${grand} / ${grandMax}</div>
+        <div style="font-size:14px;color:#888;margin-top:4px">${grand===grandMax?'완벽해요!':grand>=grandMax*0.8?'잘했어요!':'다시 도전해보세요!'}</div>
+      </div>
+      <div class="card">
+        ${S.stages.map(sid=>`
+          <div class="sresrow"><span style="color:#888">Stage ${sid}</span><span style="font-weight:600">${S.stageScores[sid]} / ${total}</span></div>
+        `).join('')}
+        ${allWrong.length>0?`<div style="margin-top:10px"><div class="label">틀린 단어</div><div class="wrong-list">${allWrong.join(', ')}</div></div>`:'<div style="font-size:13px;color:#3B6D11;margin-top:8px">틀린 단어 없음</div>'}
+      </div>
+      <div class="saving">결과가 저장되었습니다</div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="nbtn" style="flex:1" onclick="S.screen='unit';render()">유닛 선택</button>
+        <button class="nbtn" style="flex:1" onclick="doStart()">다시 풀기</button>
+      </div>
+      </div>
+    `;
+    return;
+  }
+  const unit=UNITS.find(u=>u.id===S.unit);
+  const words=unit.words;
+  const sid=S.stages[S.stageIdx];
+  const sdef=STAGE_DEFS.find(s=>s.id===sid);
+  const w=words[S.qIdx];
+  const total=words.length;
+  const pct=Math.round((S.qIdx/total)*100);
+  const fb=S.feedback[S.qIdx];
+  const isLast=S.qIdx===total-1;
+  const isMC=sdef.mc;
+  const maxSec=isMC?10:40;
+  if(!fb&&!S._ts){S._ts=true;setTimeout(()=>startTimer(maxSec),100);}
+  let qHTML='';
+  if(sid===1){
+    const opts=shuffle([w.ko,...getWrong(words,w,'ko')]);
+    qHTML=`<div class="card"><div class="label">영어 단어</div><div class="qword">${w.en}</div></div>
+    <div class="opts">${opts.map(opt=>`<button class="opt ${fb?(opt===w.ko?'ok':(S.answers[S.qIdx]===opt?'no':'')):''}\" onclick="selMC(${S.qIdx},'${opt.replace(/'/g,"\\'")}','${w.ko.replace(/'/g,"\\'")}','ko')" ${fb?'disabled':''}>${opt}</button>`).join('')}</div>`;
+  } else if(sid===2){
+    const opts=shuffle([w.en,...getWrong(words,w,'en')]);
+    qHTML=`<div class="card"><div class="label">한국어 뜻</div><div class="qword sm">${w.ko}</div></div>
+    <div class="opts">${opts.map(opt=>`<button class="opt ${fb?(opt===w.en?'ok':(S.answers[S.qIdx]===opt?'no':'')):''}\" onclick="selMC(${S.qIdx},'${opt}','${w.en}','en')" ${fb?'disabled':''}>${opt}</button>`).join('')}</div>`;
+  } else if(sid===3){
+    qHTML=`<div class="card"><div class="label">한국어 뜻</div><div class="qword sm">${w.ko}</div></div>
+    <input class="tinput" type="text" id="ti" placeholder="영어 단어 입력..." value="${S.answers[S.qIdx]||''}" onkeydown="if(event.key==='Enter')subType(${S.qIdx},'${w.en}')" ${fb?'disabled':''}>
+    ${!fb?`<button class="sbtn" onclick="subType(${S.qIdx},'${w.en}')">확인</button>`:''}
+    ${fb?`<div class="fb ${fb==='correct'?'ok':'no'}">${fb==='correct'?'정답!':'오답 — 정답: '+w.en}</div>`:''}`;
+  } else {
+    qHTML=`<div class="card"><div class="label">한국어 뜻</div><div class="qword sm">${w.ko}</div><div style="font-size:12px;color:#888;margin-top:10px">섞인 철자</div><div class="scramble">${S.scrambles[S.qIdx]}</div></div>
+    <input class="tinput" type="text" id="ti" placeholder="철자를 맞춰 입력..." value="${S.answers[S.qIdx]||''}" onkeydown="if(event.key==='Enter')subType(${S.qIdx},'${w.en}')" ${fb?'disabled':''}>
+    ${!fb?`<button class="sbtn" onclick="subType(${S.qIdx},'${w.en}')">확인</button>`:''}
+    ${fb?`<div class="fb ${fb==='correct'?'ok':'no'}">${fb==='correct'?'정답!':'오답 — 정답: '+w.en}</div>`:''}`;
+  }
+  root.innerHTML=`
+    <div style="padding-top:1.5rem">
+    <div class="badge">DAY ${String(S.unit).padStart(2,'0')} · Stage ${sid} · ${S.stageIdx+1}/${S.stages.length}</div>
+    <div class="title">${sdef.desc}</div>
+    <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
+    <div class="tbar-wrap">
+      <div class="ttext"><span id="ttime">${maxSec}초</span> · ${isMC?'객관식':'주관식'}</div>
+      <div class="tbar"><div class="tfill" id="tfill" style="width:100%;background:#1D9E75"></div></div>
+    </div>
+    ${qHTML}
+    <div class="nav">
+      <button class="nbtn" onclick="prevQ()" ${S.qIdx===0?'disabled':''}>이전</button>
+      <span style="font-size:13px;color:#888">${S.qIdx+1} / ${total}</span>
+      ${isLast?`<button class="nbtn" onclick="nextStage()">${S.stageIdx<S.stages.length-1?'다음 단계':'결과 보기'}</button>`:`<button class="nbtn" onclick="nextQ()">다음</button>`}
+    </div>
+    </div>
+  `;
+  const ti=document.getElementById('ti');
+  if(ti&&!fb)ti.focus();
+}
+
+function doLogin(){
+  const n=document.getElementById('iname').value.trim();
+  const u=document.getElementById('inum').value.trim();
+  if(!n||!u){alert('이름과 번호를 입력해주세요');return;}
+  S.name=n;S.num=u;S.screen='unit';render();
+}
+function doStart(){
+  const sc={};
+  UNITS.find(u=>u.id===S.unit).words.forEach((w,i)=>{sc[i]=scramble(w.en);});
+  const stages=[1,2];
+  if(S.opt3)stages.push(3);
+  if(S.opt4)stages.push(4);
+  Object.assign(S,{screen:'quiz',stages,stageIdx:0,qIdx:0,answers:{},feedback:{},scrambles:sc,stageScores:{},wrongWords:{},_ts:false});
+  render();
+}
+function selMC(idx,ans,correct){
+  if(S.feedback[idx])return;
+  clearInterval(S.timer);
+  S.answers[idx]=ans;
+  const ok=ans===correct;
+  S.feedback[idx]=ok?'correct':'wrong';
+  if(!ok){const sid=S.stages[S.stageIdx];if(!S.wrongWords[sid])S.wrongWords[sid]=[];S.wrongWords[sid].push(UNITS.find(u=>u.id===S.unit).words[idx].en);}
+  S._ts=false;render();
+}
+function subType(idx,correct){
+  const ti=document.getElementById('ti');if(!ti)return;
+  clearInterval(S.timer);
+  const val=ti.value.trim().toLowerCase();
+  S.answers[idx]=val;
+  const ok=val===correct.toLowerCase();
+  S.feedback[idx]=ok?'correct':'wrong';
+  if(!ok){const sid=S.stages[S.stageIdx];if(!S.wrongWords[sid])S.wrongWords[sid]=[];S.wrongWords[sid].push(UNITS.find(u=>u.id===S.unit).words[idx].en);}
+  S._ts=false;render();
+}
+function nextQ(){if(S.qIdx<UNITS.find(u=>u.id===S.unit).words.length-1){clearInterval(S.timer);S._ts=false;S.qIdx++;render();}}
+function prevQ(){if(S.qIdx>0){clearInterval(S.timer);S._ts=false;S.qIdx--;render();}}
+render();
+</script>
+</body>
+</html>
