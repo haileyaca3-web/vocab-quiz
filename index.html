@@ -579,10 +579,10 @@ function render(){
     const cacheKey=S.stageIdx+'_'+S.qIdx+'_1';
     if(!S.optionsCache[cacheKey])S.optionsCache[cacheKey]=shuffle([w.ko,...getWrong(words,w,'ko')]);
     const opts=S.optionsCache[cacheKey];
-    qHTML='<div class="card"><div class="label">영어 단어</div><div class="qword">'+w.en+'</div></div><div class="opts">';
-    opts.forEach(function(opt){
+    qHTML='<div class="card"><div class="label">영어 단어</div><div class="qword">'+w.en+'</div></div><div class="opts" id="opts-wrap">';
+    opts.forEach(function(opt,oi){
       const cls=fb?(opt===w.ko?'ok':(S.answers[S.qIdx]===opt?'no':'')):'';
-      qHTML+='<button class="opt '+cls+'" onclick="selMC('+S.qIdx+',\''+opt.replace(/'/g,"\\'")+'\''+',\''+w.ko.replace(/'/g,"\\'")+'\',\'ko\')" '+(fb?'disabled':'')+'>'+opt+'</button>';
+      qHTML+='<button class="opt '+cls+'" data-oi="'+oi+'" '+(fb?'disabled':'')+'>'+opt+'</button>';
     });
     qHTML+='</div>';
     if(fb&&fb==='wrong')qHTML+='<div class="fb ok" style="margin-top:8px;">정답: '+w.ko+'</div>';
@@ -590,10 +590,10 @@ function render(){
     const cacheKey=S.stageIdx+'_'+S.qIdx+'_2';
     if(!S.optionsCache[cacheKey])S.optionsCache[cacheKey]=shuffle([w.en,...getWrong(words,w,'en')]);
     const opts=S.optionsCache[cacheKey];
-    qHTML='<div class="card"><div class="label">한국어 뜻</div><div class="qword sm">'+w.ko+'</div></div><div class="opts">';
-    opts.forEach(function(opt){
+    qHTML='<div class="card"><div class="label">한국어 뜻</div><div class="qword sm">'+w.ko+'</div></div><div class="opts" id="opts-wrap">';
+    opts.forEach(function(opt,oi){
       const cls=fb?(opt===w.en?'ok':(S.answers[S.qIdx]===opt?'no':'')):'';
-      qHTML+='<button class="opt '+cls+'" onclick="selMC('+S.qIdx+',\''+opt+'\''+',\''+w.en+'\',\'en\')" '+(fb?'disabled':'')+'>'+opt+'</button>';
+      qHTML+='<button class="opt '+cls+'" data-oi="'+oi+'" '+(fb?'disabled':'')+'>'+opt+'</button>';
     });
     qHTML+='</div>';
     if(fb&&fb==='wrong')qHTML+='<div class="fb ok" style="margin-top:8px;">정답: '+w.en+'</div>';
@@ -613,6 +613,24 @@ function render(){
   html+='<div class="nav"><button class="nbtn" onclick="prevQ()" '+(S.qIdx===0?'disabled':'')+'>이전</button><span style="font-size:13px;color:#888;">'+(S.qIdx+1)+' / '+total+'</span>'+(isLast?'<button class="nbtn" onclick="nextStage()">'+(S.stageIdx<S.stages.length-1?'다음 단계':'결과 보기')+'</button>':'<button class="nbtn" onclick="nextQ()">다음</button>')+'</div>';
   root.innerHTML=html;
   const ti=document.getElementById('ti');if(ti&&!fb)ti.focus();
+
+  const optsWrap=document.getElementById('opts-wrap');
+  if(optsWrap&&!fb){
+    const curSid=S.stages[S.stageIdx];
+    const curWords=S.isRetry?S.retryWords:S.currentWords;
+    const curW=curWords[S.qIdx];
+    const curIdx=S.qIdx;
+    const cacheKey=S.stageIdx+'_'+S.qIdx+'_'+curSid;
+    const curOpts=S.optionsCache[cacheKey];
+    optsWrap.querySelectorAll('.opt').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        const oi=parseInt(btn.getAttribute('data-oi'));
+        const chosen=curOpts[oi];
+        const correct=curSid===1?curW.ko:curW.en;
+        selMC(curIdx,chosen,correct);
+      });
+    });
+  }
 }
 
 function selMC(idx,ans,correct){
