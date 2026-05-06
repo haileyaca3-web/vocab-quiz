@@ -402,8 +402,15 @@ function render(){
   if(S.screen==='bookSelect'){
     let html='<div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;"><button class="nbtn" onclick="S.screen=\''+(S.division==='고등부'?'schoolSelect':'divisionSelect')+'\';render()">← 뒤로</button><div style="font-size:18px;font-weight:500;">'+(S.division==='고등부'&&S.school?S.school:S.division)+'</div></div>';
     html+='<div class="title">단어장 선택</div>';
-    S.books.forEach(b=>{html+='<button class="srow" onclick="loadWords(\''+b.replace(/'/g,"\\'")+'\'"><div class="sname">'+b+'</div></button>';});
-    root.innerHTML=html;return;
+    S.books.forEach((b,bi)=>{html+='<button class="srow" data-bi="'+bi+'"><div class="sname">'+b+'</div></button>';});
+    root.innerHTML=html;
+    document.querySelectorAll('[data-bi]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const b=S.books[parseInt(btn.getAttribute('data-bi'))];
+        loadWords(b);
+      });
+    });
+    return;
   }
 
   if(S.screen==='unitSelect'){
