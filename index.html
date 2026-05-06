@@ -804,6 +804,7 @@ function render(){
   }
 
   // Quiz screen
+  if(S.screen!=='quiz'){return;}
   const words=S.isRetry?S.retryWords:S.currentWords;
   const sid=S.stages[S.stageIdx];
   const sdef=STAGE_DEFS.find(function(s){return s.id===sid;});
