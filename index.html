@@ -804,7 +804,6 @@ function render(){
   }
 
   // Quiz screen
-  if(S.screen!=='quiz'){return;}
   const words=S.isRetry?S.retryWords:S.currentWords;
   const sid=S.stages[S.stageIdx];
   const sdef=STAGE_DEFS.find(function(s){return s.id===sid;});
@@ -896,15 +895,12 @@ function selMC(idx,ans,correct){
 function normalizeAnswer(str){
   return str.replace(/\(.*?\)/g,'').replace(/\s+/g,' ').trim().toLowerCase();
 }
-
 function similarity(a,b){
-  const m=a.length,n=b.length;
-  if(m===0||n===0)return 0;
+  const m=a.length,n=b.length;if(m===0||n===0)return 0;
   const dp=Array.from({length:m+1},function(_,i){return Array.from({length:n+1},function(_,j){return i===0?j:j===0?i:0;});});
   for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
   return 1-dp[m][n]/Math.max(m,n);
 }
-
 function checkAnswer(val,correct){
   const v=normalizeAnswer(val);
   const parts=correct.split(/[,，]/).map(function(p){return normalizeAnswer(p);}).filter(function(p){return p.length>0;});
@@ -914,7 +910,6 @@ function checkAnswer(val,correct){
   }
   return false;
 }
-
 function subType(idx,correct){
   const ti=document.getElementById('ti');if(!ti)return;
   clearInterval(S.timer);
