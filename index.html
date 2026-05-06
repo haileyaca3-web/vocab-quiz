@@ -130,6 +130,8 @@ let S={
   retryWords:[],isRetry:false,
   loginError:'',loading:false,
   teacherResults:[],pendingStudents:[],teacherTab:'결과보기',teacherSelected:null,
+  calendarDate:null,calendarStudent:null,
+  myResults:[],myResultsLoaded:false,
 };
 
 function startTimer(sec){
@@ -370,7 +372,85 @@ function render(){
   if(S.screen==='myRanking'){
     const myBadges=S.rankings?S.rankings.filter(function(r){return r.id===S.userId;}):[];
     const seasons=[...new Set((S.rankings||[]).map(function(r){return r.season;}))];
+
+    // 날짜별 내 틀린단어 보기 (선택된 날짜가 있을 때)
+    if(S.calendarDate){
+      const dayResults=S.myResults.filter(function(r){return String(r.date).startsWith(S.calendarDate);});
+      // 같은 날 여러 unit 합치기
+      const mw=function(w){return w?w.split(',').map(function(x){return x.trim();}).filter(Boolean):[];};
+      let html='<div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;"><button class="nbtn" onclick="S.calendarDate=null;render()">← 뒤로</button><div class="title" style="margin-bottom:0;">'+S.calendarDate+' 틀린단어</div></div>';
+      if(dayResults.length===0){
+        html+='<div class="card" style="text-align:center;padding:2rem;color:#888;">이날 시험 기록이 없어요</div>';
+      } else {
+        dayResults.forEach(function(r){
+          const wrongs=[...new Set([...mw(r.s1wrong),...mw(r.s2wrong),...mw(r.s3wrong),...mw(r.s4wrong)])];
+          const total=(Number(r.s1score)||0)+(Number(r.s2score)||0)+(Number(r.s3score)||0)+(Number(r.s4score)||0);
+          html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+          html+='<span style="font-size:17px;font-weight:500;">'+r.unit+'</span>';
+          html+='<span class="score-pill '+(total>=32?'score-hi':total>=20?'score-mid':'score-lo')+'">'+total+'점</span></div>';
+          if(wrongs.length>0){
+            html+='<div style="font-size:15px;color:#A32D2D;margin-bottom:8px;">틀린단어 ('+wrongs.length+'개)</div>';
+            html+='<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+            wrongs.forEach(function(w){html+='<span style="background:#FCEBEB;border:1px solid #F09595;border-radius:8px;padding:6px 12px;font-size:16px;font-weight:500;color:#791F1F;">'+w+'</span>';});
+            html+='</div>';
+          } else {
+            html+='<div style="font-size:15px;color:#3B6D11;">틀린 단어 없음 👍</div>';
+          }
+          html+='</div>';
+        });
+      }
+      root.innerHTML=html;return;
+    }
+
+    // 이번달 달력
+    const now=new Date();
+    const thisYear=now.getFullYear();
+    const thisMonth=now.getMonth()+1;
+    const today=now.getDate();
+    const firstDay=new Date(thisYear,now.getMonth(),1).getDay();
+    const lastDate=new Date(thisYear,now.getMonth()+1,0).getDate();
+
+    // 시험본 날짜 추출
+    const testedDates={};
+    (S.myResults||[]).forEach(function(r){
+      const d=String(r.date);
+      // 날짜 파싱: "2026. 5. 6." 또는 "2026.5.6" 형태
+      const m=d.match(/(\d{4})[.\s]+(\d{1,2})[.\s]+(\d{1,2})/);
+      if(m){
+        const yr=parseInt(m[1]),mo=parseInt(m[2]),dy=parseInt(m[3]);
+        if(yr===thisYear&&mo===thisMonth){
+          const key=dy;
+          if(!testedDates[key])testedDates[key]=[];
+          testedDates[key].push(r);
+        }
+      }
+    });
+
     let html='<div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;"><button class="nbtn" onclick="S.screen=\'divisionSelect\';render()">← 뒤로</button><div class="title" style="margin-bottom:0;">🏆 내 기록 / 랭킹</div></div>';
+
+    // 달력 섹션
+    html+='<div class="card" style="margin-bottom:12px;">';
+    html+='<div style="font-size:17px;font-weight:500;margin-bottom:12px;text-align:center;">'+thisYear+'년 '+thisMonth+'월 내 시험 기록</div>';
+    html+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;margin-bottom:6px;">';
+    ['일','월','화','수','목','금','토'].forEach(function(d){html+='<div style="font-size:13px;color:#888;padding:4px;">'+d+'</div>';});
+    html+='</div>';
+    html+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;">';
+    for(var i=0;i<firstDay;i++)html+='<div></div>';
+    for(var d=1;d<=lastDate;d++){
+      const hasTest=testedDates[d];
+      const isToday=d===today;
+      const dateStr=thisYear+'. '+thisMonth+'. '+d+'.';
+      if(hasTest){
+        html+='<div onclick="S.calendarDate=\''+thisYear+'. '+thisMonth+'. '+d+'\';render()" style="padding:6px 2px;border-radius:8px;background:#1D9E75;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">'+(isToday?'<u>'+d+'</u>':d)+'</div>';
+      } else {
+        html+='<div style="padding:6px 2px;border-radius:8px;font-size:15px;color:'+(isToday?'#185FA5':'#ccc')+';font-weight:'+(isToday?'700':'400')+';background:'+(isToday?'#EEF4FB':'transparent')+';">'+d+'</div>';
+      }
+    }
+    html+='</div>';
+    html+='<div style="margin-top:10px;font-size:13px;color:#888;text-align:center;">초록 날짜를 누르면 그날 틀린단어를 볼 수 있어요</div>';
+    html+='</div>';
+
+    // 수상기록
     if(myBadges.length>0){
       html+='<div class="card"><div class="label" style="margin-bottom:8px;">나의 수상 기록</div>';
       myBadges.forEach(function(r){html+='<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;"><span>'+r.season+'</span><span>'+r.badge+' '+r.rank+'등</span></div>';});
@@ -467,7 +547,8 @@ function render(){
       const s1w=mw(st.s1wrong),s2w=mw(st.s2wrong),s3w=mw(st.s3wrong),s4w=mw(st.s4wrong);
       const allWrong=[...new Set([...s1w,...s2w,...s3w,...s4w])];
       const total=(Number(st.s1score)||0)+(Number(st.s2score)||0)+(Number(st.s3score)||0)+(Number(st.s4score)||0);
-      const txt='[단어시험 결과]\n이름: '+st.name+'\n유닛: '+st.unit+'\n날짜: '+st.date+'\n총점: '+total+'점\n틀린단어: '+(allWrong.length>0?allWrong.join(', '):'없음');
+      const notice='\n\n공지사항: 틀린 단어는 단어를 포함한 문장쓰기가\n개별 숙제입니다.\n영어문장[틀린단어는 밑줄로 표시]+한국어\n수업 전 선생님께 제출 바랍니다.';
+      const txt='[단어시험 결과]\n이름: '+st.name+'\n유닛: '+st.unit+'\n날짜: '+st.date+'\n총점: '+total+'점\n틀린단어: '+(allWrong.length>0?allWrong.join(', '):'없음')+notice;
       let html='<div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;"><button class="nbtn" onclick="S.teacherSelected=null;render()">← 뒤로</button><div style="font-size:18px;font-weight:500;">'+st.name+' <span style="font-size:14px;color:#888;">('+st.div+')</span></div></div>';
       html+='<div class="card" style="text-align:center;margin-bottom:10px;"><div style="font-size:15px;color:#888;">'+st.unit+' · '+st.date+'</div><div style="font-size:40px;font-weight:500;margin-top:8px;">'+total+'점</div></div>';
       html+='<div class="card">';
@@ -497,7 +578,169 @@ function render(){
       });
       const students=Object.values(grouped).sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
       let html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;"><div class="title" style="margin-bottom:0;">선생님 화면</div><button style="font-size:15px;color:#888;background:none;border:none;cursor:pointer;" onclick="loadTeacherResults()">새로고침</button></div>';
-      html+='<div class="filter-row"><button class="filter-btn active">결과보기</button><button class="filter-btn" onclick="S.teacherTab=\'월말결과\';render()">월말결과</button></div>';
+      html+='<div class="filter-row"><button class="filter-btn active">결과보기</button><button class="filter-btn" onclick="S.teacherTab=\'달력\';S.calendarDate=null;S.calendarStudent=null;render()">달력</button><button class="filter-btn" onclick="S.teacherTab=\'월말결과\';render()">월말결과</button></div>';
+      html+='<div style="font-size:14px;color:#888;margin-bottom:12px;">어제 · 오늘 결과</div>';
+      if(S.pendingStudents&&S.pendingStudents.length>0){
+        html+='<div class="card" style="border-color:#BA7517;margin-bottom:12px;"><div style="font-size:16px;font-weight:500;color:#633806;margin-bottom:10px;">승인 대기 ('+S.pendingStudents.length+'명)</div>';
+        S.pendingStudents.forEach(function(s){
+          html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">';
+          html+='<div><div style="font-size:16px;font-weight:500;">'+s.name+'</div><div style="font-size:14px;color:#888;">'+s.id+' · '+(s.division||'')+'</div></div>';
+          html+='<button class="btn green" style="width:auto;padding:6px 14px;margin:0;font-size:15px;" onclick="approveStudent(\''+s.id+'\')">승인</button></div>';
+        });
+        html+='</div>';
+      }
+      if(students.length===0)html+='<div style="text-align:center;padding:2rem;color:#888;">결과가 없어요</div>';
+      students.forEach(function(st){
+        const mw=function(w){return w?w.split(',').map(function(x){return x.trim();}).filter(Boolean):[];};
+        const allWrong=[...new Set([...mw(st.s1wrong),...mw(st.s2wrong),...mw(st.s3wrong),...mw(st.s4wrong)])];
+        const totalScore=(Number(st.s1score)||0)+(Number(st.s2score)||0)+(Number(st.s3score)||0)+(Number(st.s4score)||0);
+        const cls=totalScore>=32?'score-hi':totalScore>=20?'score-mid':'score-lo';
+        const isToday=String(st.date).startsWith(today);
+        const stJson=JSON.stringify(st).replace(/"/g,'&quot;');
+        html+='<div class="card" style="cursor:pointer;" onclick="S.teacherSelected='+stJson+';render()">';
+        html+='<div style="display:flex;justify-content:space-between;align-items:center;">';
+        html+='<div><span style="font-size:17px;font-weight:500;">'+st.name+'</span>';
+        html+='<span style="font-size:13px;color:#fff;background:'+(isToday?'#1D9E75':'#888')+';border-radius:999px;padding:2px 8px;margin-left:6px;">'+(isToday?'오늘':'어제')+'</span>';
+        html+='<span style="font-size:13px;color:#888;margin-left:4px;">'+st.div+'</span></div>';
+        html+='<span class="score-pill '+cls+'">'+totalScore+'점</span></div>';
+        html+='<div style="font-size:15px;color:#888;margin-top:4px;">'+st.unit+'</div>';
+        html+='<div style="font-size:15px;color:'+(allWrong.length>0?'#A32D2D':'#3B6D11')+';margin-top:4px;">틀린단어: '+(allWrong.length>0?allWrong.join(', '):'없음')+'</div></div>';
+      });
+      html+='<button class="btn secondary" style="margin-top:8px;" onclick="S.screen=\'login\';S.loginTab=\'login\';render()">로그아웃</button>';
+      root.innerHTML=html;return;
+    }
+
+    if(S.teacherTab==='달력'){
+      const mw=function(w){return w?w.split(',').map(function(x){return x.trim();}).filter(Boolean):[];};
+
+      // 학생 선택 상태 → unit 합쳐서 상세보기
+      if(S.calendarStudent){
+        const studentId=S.calendarStudent;
+        const dayResults=S.teacherResults.filter(function(r){
+          const d=String(r.date);
+          const m=d.match(/(\d{4})[.\s]+(\d{1,2})[.\s]+(\d{1,2})/);
+          if(!m)return false;
+          const dy=parseInt(m[3]);
+          return r.id===studentId&&String(r.date).includes(thisYear+'')&&String(r.date).includes('.'+thisMonth+'.')||
+            (m&&parseInt(m[1])===thisYear&&parseInt(m[2])===thisMonth&&String(r.date).startsWith(S.calendarDate));
+        }).filter(function(r){return String(r.date).startsWith(S.calendarDate);});
+
+        const studentName=dayResults.length>0?dayResults[0].name:studentId;
+        const studentDiv=dayResults.length>0?dayResults[0].div:'';
+
+        // unit별 틀린단어 정리
+        const unitLines=dayResults.map(function(r){
+          const wrongs=[...new Set([...mw(r.s1wrong),...mw(r.s2wrong),...mw(r.s3wrong),...mw(r.s4wrong)])];
+          const total=(Number(r.s1score)||0)+(Number(r.s2score)||0)+(Number(r.s3score)||0)+(Number(r.s4score)||0);
+          return {unit:r.unit,total:total,wrongs:wrongs};
+        });
+
+        const notice='\n\n공지사항: 틀린 단어는 단어를 포함한 문장쓰기가\n개별 숙제입니다.\n영어문장[틀린단어는 밑줄로 표시]+한국어\n수업 전 선생님께 제출 바랍니다.';
+        const txtLines='[단어시험 결과]\n이름: '+studentName+'\n날짜: '+S.calendarDate+'\n'+
+          unitLines.map(function(u){return '유닛: '+u.unit+'\n총점: '+u.total+'점\n틀린단어: '+(u.wrongs.length>0?u.wrongs.join(', '):'없음');}).join('\n\n')+notice;
+
+        let html='<div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;"><button class="nbtn" onclick="S.calendarStudent=null;render()">← 뒤로</button><div style="font-size:18px;font-weight:500;">'+studentName+' <span style="font-size:14px;color:#888;">('+studentDiv+')</span></div></div>';
+        html+='<div style="font-size:14px;color:#888;margin-bottom:12px;">'+S.calendarDate+'</div>';
+        unitLines.forEach(function(u){
+          html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+          html+='<span style="font-size:17px;font-weight:500;">'+u.unit+'</span>';
+          html+='<span class="score-pill '+(u.total>=32?'score-hi':u.total>=20?'score-mid':'score-lo')+'">'+u.total+'점</span></div>';
+          if(u.wrongs.length>0){
+            html+='<div style="font-size:15px;color:#A32D2D;margin-bottom:8px;">틀린단어 ('+u.wrongs.length+'개)</div>';
+            html+='<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+            u.wrongs.forEach(function(w){html+='<span style="background:#FCEBEB;border:1px solid #F09595;border-radius:8px;padding:6px 12px;font-size:16px;font-weight:500;color:#791F1F;">'+w+'</span>';});
+            html+='</div>';
+          } else {
+            html+='<div style="font-size:15px;color:#3B6D11;">틀린 단어 없음</div>';
+          }
+          html+='</div>';
+        });
+        html+='<button class="btn green" onclick="copyTeacherResult(\''+txtLines.replace(/\n/g,'\\n').replace(/'/g,"\\'")+'\')">카카오톡 복사</button>';
+        html+='<button class="btn secondary" style="margin-top:8px;" onclick="S.calendarStudent=null;render()">뒤로</button>';
+        root.innerHTML=html;return;
+      }
+
+      // 날짜 선택 상태 → 그날 학생 목록
+      if(S.calendarDate){
+        const dayResults=S.teacherResults.filter(function(r){return String(r.date).startsWith(S.calendarDate);});
+        // 학생별로 묶기
+        const byStudent={};
+        dayResults.forEach(function(r){
+          if(!byStudent[r.id])byStudent[r.id]={name:r.name,id:r.id,div:r.div,units:[]};
+          byStudent[r.id].units.push(r);
+        });
+        const studentList=Object.values(byStudent);
+        let html='<div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;"><button class="nbtn" onclick="S.calendarDate=null;render()">← 뒤로</button><div class="title" style="margin-bottom:0;">'+S.calendarDate+'</div></div>';
+        html+='<div style="font-size:14px;color:#888;margin-bottom:12px;">시험 본 학생 ('+studentList.length+'명) · 이름을 눌러 복사</div>';
+        if(studentList.length===0){
+          html+='<div style="text-align:center;padding:2rem;color:#888;">이날 시험 기록이 없어요</div>';
+        }
+        studentList.forEach(function(st){
+          const allWrongs=[];
+          st.units.forEach(function(r){allWrongs.push(...new Set([...mw(r.s1wrong),...mw(r.s2wrong),...mw(r.s3wrong),...mw(r.s4wrong)]));});
+          const totalScore=st.units.reduce(function(sum,r){return sum+(Number(r.s1score)||0)+(Number(r.s2score)||0)+(Number(r.s3score)||0)+(Number(r.s4score)||0);},0);
+          const unitNames=st.units.map(function(r){return r.unit;}).join(', ');
+          const cls=totalScore>=32?'score-hi':totalScore>=20?'score-mid':'score-lo';
+          html+='<div class="card" style="cursor:pointer;" onclick="S.calendarStudent=\''+st.id+'\';render()">';
+          html+='<div style="display:flex;justify-content:space-between;align-items:center;">';
+          html+='<div><span style="font-size:17px;font-weight:500;">'+st.name+'</span><span style="font-size:13px;color:#888;margin-left:6px;">'+st.div+'</span></div>';
+          html+='<span class="score-pill '+cls+'">'+totalScore+'점</span></div>';
+          html+='<div style="font-size:14px;color:#888;margin-top:4px;">'+unitNames+'</div>';
+          html+='<div style="font-size:14px;color:'+(allWrongs.length>0?'#A32D2D':'#3B6D11')+';margin-top:4px;">틀린단어: '+(allWrongs.length>0?allWrongs.join(', '):'없음')+'</div>';
+          html+='</div>';
+        });
+        root.innerHTML=html;return;
+      }
+
+      // 달력 메인
+      const firstDay=new Date(thisYear,now.getMonth(),1).getDay();
+      const lastDate=new Date(thisYear,now.getMonth()+1,0).getDate();
+      const todayDate=now.getDate();
+
+      // 시험 있는 날짜 추출
+      const testedDays={};
+      S.teacherResults.forEach(function(r){
+        const d=String(r.date);
+        const m=d.match(/(\d{4})[.\s]+(\d{1,2})[.\s]+(\d{1,2})/);
+        if(m&&parseInt(m[1])===thisYear&&parseInt(m[2])===thisMonth){
+          const dy=parseInt(m[3]);
+          if(!testedDays[dy])testedDays[dy]=0;
+          // 학생 수 (중복 제거)
+          testedDays[dy]=dy;
+        }
+      });
+
+      let html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;"><div class="title" style="margin-bottom:0;">선생님 화면</div><button style="font-size:15px;color:#888;background:none;border:none;cursor:pointer;" onclick="loadTeacherResults()">새로고침</button></div>';
+      html+='<div class="filter-row"><button class="filter-btn" onclick="S.teacherTab=\'결과보기\';render()">결과보기</button><button class="filter-btn active">달력</button><button class="filter-btn" onclick="S.teacherTab=\'월말결과\';render()">월말결과</button></div>';
+      html+='<div class="card">';
+      html+='<div style="font-size:17px;font-weight:500;margin-bottom:12px;text-align:center;">'+thisYear+'년 '+thisMonth+'월</div>';
+      html+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;margin-bottom:6px;">';
+      ['일','월','화','수','목','금','토'].forEach(function(d){html+='<div style="font-size:13px;color:#888;padding:4px;">'+d+'</div>';});
+      html+='</div>';
+      html+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;">';
+      for(var i=0;i<firstDay;i++)html+='<div></div>';
+      for(var d=1;d<=lastDate;d++){
+        const hasTest=testedDays[d];
+        const isToday=d===todayDate;
+        const dateStr=thisYear+'. '+thisMonth+'. '+d+'.';
+        if(hasTest){
+          // 그날 학생수 계산
+          const cnt=[...new Set(S.teacherResults.filter(function(r){
+            const dm=String(r.date).match(/(\d{4})[.\s]+(\d{1,2})[.\s]+(\d{1,2})/);
+            return dm&&parseInt(dm[1])===thisYear&&parseInt(dm[2])===thisMonth&&parseInt(dm[3])===d;
+          }).map(function(r){return r.id;}))].length;
+          html+='<div onclick="S.calendarDate=\''+thisYear+'. '+thisMonth+'. '+d+'\';render()" style="padding:6px 2px;border-radius:8px;background:#1D9E75;color:#fff;font-size:15px;font-weight:600;cursor:pointer;position:relative;">';
+          html+=d+'<div style="font-size:10px;opacity:0.85;">'+cnt+'명</div></div>';
+        } else {
+          html+='<div style="padding:6px 2px;border-radius:8px;font-size:15px;color:'+(isToday?'#185FA5':'#ccc')+';font-weight:'+(isToday?'700':'400')+';background:'+(isToday?'#EEF4FB':'transparent')+';">'+d+'</div>';
+        }
+      }
+      html+='</div>';
+      html+='<div style="margin-top:10px;font-size:13px;color:#888;text-align:center;">초록 날짜를 눌러 학생 목록 확인</div>';
+      html+='</div>';
+      html+='<button class="btn secondary" style="margin-top:8px;" onclick="S.screen=\'login\';S.loginTab=\'login\';render()">로그아웃</button>';
+      root.innerHTML=html;return;
+    }
       html+='<div style="font-size:14px;color:#888;margin-bottom:12px;">어제 · 오늘 결과</div>';
       if(S.pendingStudents&&S.pendingStudents.length>0){
         html+='<div class="card" style="border-color:#BA7517;margin-bottom:12px;"><div style="font-size:16px;font-weight:500;color:#633806;margin-bottom:10px;">승인 대기 ('+S.pendingStudents.length+'명)</div>';
@@ -547,7 +790,7 @@ function render(){
       const monthStudents=Object.keys(wrongMap).map(function(id){return {id,name:nameMap[id],div:divMap[id],wrongs:wrongMap[id]};});
       const monthTxt='['+thisYear+'년 '+thisMonth+'월 틀린단어 누적]\n'+monthStudents.map(function(s){return s.name+'('+s.id+') '+s.div+'\n틀린단어: '+(s.wrongs.length>0?s.wrongs.join(', '):'없음');}).join('\n\n');
       let html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;"><div class="title" style="margin-bottom:0;">선생님 화면</div><button style="font-size:15px;color:#888;background:none;border:none;cursor:pointer;" onclick="loadTeacherResults()">새로고침</button></div>';
-      html+='<div class="filter-row"><button class="filter-btn" onclick="S.teacherTab=\'결과보기\';render()">결과보기</button><button class="filter-btn active">월말결과</button></div>';
+      html+='<div class="filter-row"><button class="filter-btn" onclick="S.teacherTab=\'결과보기\';render()">결과보기</button><button class="filter-btn" onclick="S.teacherTab=\'달력\';S.calendarDate=null;S.calendarStudent=null;render()">달력</button><button class="filter-btn active">월말결과</button></div>';
       html+='<div style="font-size:14px;color:#888;margin-bottom:12px;">'+thisYear+'년 '+thisMonth+'월 누적 틀린단어</div>';
       if(monthStudents.length===0)html+='<div style="text-align:center;padding:2rem;color:#888;">이번달 결과가 없어요</div>';
       monthStudents.forEach(function(s){
@@ -678,10 +921,15 @@ function prevQ(){
 
 function loadRankings(){
   S.loading=true;render();
-  fetch(SCRIPT_URL+'?action=getRankings&division='+encodeURIComponent(S.division||'중등부'))
-    .then(function(r){return r.json();})
-    .then(function(data){S.rankings=data;S.loading=false;render();})
-    .catch(function(){S.loading=false;render();});
+  Promise.all([
+    fetch(SCRIPT_URL+'?action=getRankings&division='+encodeURIComponent(S.division||'중등부')).then(function(r){return r.json();}),
+    fetch(SCRIPT_URL+'?action=getResults&division='+encodeURIComponent(S.division||'중등부')).then(function(r){return r.json();})
+  ]).then(function(arr){
+    S.rankings=arr[0];
+    S.myResults=arr[1].filter(function(r){return r.id===S.userId;});
+    S.myResultsLoaded=true;
+    S.loading=false;render();
+  }).catch(function(){S.loading=false;render();});
 }
 
 render();
