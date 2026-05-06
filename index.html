@@ -312,17 +312,9 @@ function getBadges(userId){
   return S.rankings.filter(function(r){return r.id===userId;}).map(function(r){return r.badge;}).join(' ');
 }
 
-function isRetestNeeded(){
-  const s1wrong=(S.stageWrongs[1]||[]).length;
-  const s2wrong=(S.stageWrongs[2]||[]).length;
-  return s1wrong>=4||s2wrong>=4;
-}
-
 function copyResult(score,total,pct,wrongEncoded){
   const wrong=decodeURIComponent(wrongEncoded);
-  const retest=isRetestNeeded();
-  const retestMsg=retest?'\n⚠️ 재시험 대상':'';
-  const text='[단어시험 결과]\n'+S.name+' '+S.selectedUnit+'\n점수: '+score+'/'+total+' (정확도 '+pct+'%)\n틀린단어: '+(wrong||'없음')+retestMsg;
+  const text='[단어시험 결과]\n'+S.name+' '+S.selectedUnit+'\n점수: '+score+'/'+total+' (정확도 '+pct+'%)\n틀린단어: '+(wrong||'없음');
   navigator.clipboard.writeText(text).then(function(){alert('복사됐어요! 카카오톡에 붙여넣기 하세요 😊');})
     .catch(function(){prompt('아래 텍스트를 복사하세요:', text);});
 }
@@ -517,17 +509,9 @@ function render(){
     const grandMax=S.stages.length*total;
     const pct=Math.round((grand/grandMax)*100);
     const wrongObjs=S.wrongWordObjs;
-    const retest=!S.isRetry&&isRetestNeeded();
     let html='<div class="badge">'+(S.isRetry?'오답 재시험':S.selectedUnit)+' · 결과</div>';
     html+='<div class="title">'+S.name+'님의 결과</div>';
     html+='<div class="card" style="text-align:center;margin-bottom:10px;"><div class="res-big">'+grand+' / '+grandMax+'</div><div style="font-size:17px;color:#888;margin-top:4px;">정확도 '+pct+'%</div><div style="font-size:16px;color:#888;margin-top:4px;">'+(grand===grandMax?'완벽해요!':grand>=grandMax*0.8?'잘했어요!':'다시 도전해보세요!')+'</div></div>';
-    if(retest){
-      html+='<div class="card" style="background:#FCEBEB;border-color:#A32D2D;text-align:center;padding:1.2rem;">';
-      html+='<div style="font-size:20px;font-weight:700;color:#791F1F;margin-bottom:6px;">⚠️ 재시험입니다</div>';
-      html+='<div style="font-size:16px;color:#A32D2D;">틀린 단어: '+wrongObjs.map(function(w){return w.en;}).join(', ')+'</div>';
-      html+='<div style="font-size:16px;color:#A32D2D;margin-top:6px;">영↔한 단어 한 번씩 쓰고 3단계로 이동합니다.</div>';
-      html+='</div>';
-    }
     if(S.stages.length>1){
       html+='<div class="card">';
       S.stages.forEach(function(sid){html+='<div class="sresrow"><span style="color:#888">Stage '+sid+'</span><span style="font-weight:500">'+(S.stageScores[sid]||0)+' / '+total+'</span></div>';});
@@ -564,9 +548,7 @@ function render(){
       const allWrong=[...new Set([...s1w,...s2w,...s3w,...s4w])];
       const total=(Number(st.s1score)||0)+(Number(st.s2score)||0)+(Number(st.s3score)||0)+(Number(st.s4score)||0);
       const notice='\n\n공지사항: 틀린 단어는 단어를 포함한 문장쓰기가\n개별 숙제입니다.\n영어문장[틀린단어는 밑줄로 표시]+한국어\n수업 전 선생님께 제출 바랍니다.';
-      const s1wrongCnt=s1w.length;const s2wrongCnt=s2w.length;
-      const retestTxt=(s1wrongCnt>=4||s2wrongCnt>=4)?'\n⚠️ 재시험 대상 (영↔한 단어 한 번씩 쓰고 3단계로 이동)':'';
-      const txt='[단어시험 결과]\n이름: '+st.name+'\n유닛: '+st.unit+'\n날짜: '+st.date+'\n총점: '+total+'점\n틀린단어: '+(allWrong.length>0?allWrong.join(', '):'없음')+retestTxt+notice;
+      const txt='[단어시험 결과]\n이름: '+st.name+'\n유닛: '+st.unit+'\n날짜: '+st.date+'\n총점: '+total+'점\n틀린단어: '+(allWrong.length>0?allWrong.join(', '):'없음')+notice;
       let html='<div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;"><button class="nbtn" onclick="S.teacherSelected=null;render()">← 뒤로</button><div style="font-size:18px;font-weight:500;">'+st.name+' <span style="font-size:14px;color:#888;">('+st.div+')</span></div></div>';
       html+='<div class="card" style="text-align:center;margin-bottom:10px;"><div style="font-size:15px;color:#888;">'+st.unit+' · '+st.date+'</div><div style="font-size:40px;font-weight:500;margin-top:8px;">'+total+'점</div></div>';
       html+='<div class="card">';
@@ -822,7 +804,6 @@ function render(){
   }
 
   // Quiz screen
-  if(S.screen!=='quiz')return;
   const words=S.isRetry?S.retryWords:S.currentWords;
   const sid=S.stages[S.stageIdx];
   const sdef=STAGE_DEFS.find(function(s){return s.id===sid;});
@@ -916,7 +897,6 @@ function normalizeAnswer(str){
 }
 
 function similarity(a,b){
-  // 레벤슈타인 거리 기반 유사도
   const m=a.length,n=b.length;
   if(m===0||n===0)return 0;
   const dp=Array.from({length:m+1},function(_,i){return Array.from({length:n+1},function(_,j){return i===0?j:j===0?i:0;});});
@@ -926,11 +906,10 @@ function similarity(a,b){
 
 function checkAnswer(val,correct){
   const v=normalizeAnswer(val);
-  // 쉼표로 구분된 뜻들 각각 비교
   const parts=correct.split(/[,，]/).map(function(p){return normalizeAnswer(p);}).filter(function(p){return p.length>0;});
   for(let i=0;i<parts.length;i++){
-    if(v===parts[i])return true; // 완전 일치
-    if(parts[i].length>=4&&similarity(v,parts[i])>=0.8)return true; // 유사도 80% 이상
+    if(v===parts[i])return true;
+    if(parts[i].length>=4&&similarity(v,parts[i])>=0.8)return true;
   }
   return false;
 }
