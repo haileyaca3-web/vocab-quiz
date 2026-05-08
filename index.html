@@ -363,18 +363,15 @@ function render(){
 
   if(S.screen==='testIntro'){
     const q=QUOTES[S.quoteIdx];
-    root.innerHTML='<div style="background:#E8F4FD;border-radius:16px;padding:24px;">'
-      +'<div style="text-align:center;background:#111;color:#fff;border-radius:12px;padding:14px 20px;margin-bottom:20px;"><div style="font-size:20px;font-weight:700;">지금부터 단어 Test를 시작합니다</div></div>'
-      +'<div style="text-align:center;margin-bottom:16px;"><div style="font-size:19px;font-weight:600;color:#111;">'+S.name+', 오늘도 너는 최고야 💜</div></div>'
-      +'<div style="background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:20px;border:1px solid #cce4f6;">'
-      +'<div style="display:flex;gap:10px;margin-bottom:10px;"><span style="font-size:15px;font-weight:600;color:#111;min-width:20px;">1.</span><span style="font-size:15px;color:#111;">책과 노트는 모두 정리해 주세요.</span></div>'
-      +'<div style="display:flex;gap:10px;"><span style="font-size:15px;font-weight:600;color:#111;min-width:20px;">2.</span><span style="font-size:15px;color:#111;">선생님이 보는 곳에서 진행됩니다.</span></div>'
+    root.innerHTML='<div style="background:#1a2744;border-radius:16px;padding:32px 24px;text-align:center;">'
+      +'<div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:16px;white-space:nowrap;">지금부터 단어 Test를 시작합니다</div>'
+      +'<div style="font-size:17px;font-weight:600;color:#fff;margin-bottom:24px;">'+S.name+', 오늘도 너는 최고야 💜</div>'
+      +'<div style="margin-bottom:28px;">'
+      +'<div style="font-size:15px;color:rgba(255,255,255,0.85);margin-bottom:10px;">1. 책과 노트는 모두 정리해 주세요.</div>'
+      +'<div style="font-size:15px;color:rgba(255,255,255,0.85);">2. 선생님이 보는 곳에서 진행됩니다.</div>'
       +'</div>'
-      +'<div style="background:#fff;border:1.5px solid #111;border-radius:12px;padding:14px 20px;margin-bottom:20px;text-align:center;">'
-      +'<div style="font-size:14px;font-weight:600;color:#111;font-style:italic;line-height:1.6;">&ldquo;'+q.q+'&rdquo;</div>'
-      +'<div style="font-size:13px;color:#111;margin-top:6px;font-weight:500;">'+q.a+'</div>'
-      +'</div>'
-      +'<button class="btn primary" onclick="loadBooks()">시작</button>'
+      +'<button class="btn" style="width:100%;background:#fff;color:#1a2744;border:none;border-radius:12px;padding:16px;font-size:18px;font-weight:700;cursor:pointer;margin-bottom:24px;" onclick="loadBooks()">시작</button>'
+      +'<div style="font-size:13px;color:rgba(255,255,255,0.65);font-style:italic;line-height:1.6;">&ldquo;'+q.q+'&rdquo;<br><span style="font-style:normal;font-size:12px;">'+q.a+'</span></div>'
       +'</div>';
     return;
   }
