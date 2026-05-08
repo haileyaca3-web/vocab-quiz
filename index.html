@@ -94,30 +94,30 @@ const TEACHER_ID='teacher';
 const TEACHER_PW='admin1234';
 const HIGH_SCHOOLS=['순천고1','순천여고1','강남여고1','금당고1','제일고1','복성고1','매여고2','매고2','순여고2','효천고2','금당고2'];
 const QUOTES=[
-  {q:"The secret of getting ahead is getting started.",a:"Mark Twain"},
-  {q:"It always seems impossible until it's done.",a:"Nelson Mandela"},
-  {q:"Believe you can and you're halfway there.",a:"Theodore Roosevelt"},
-  {q:"The harder I work, the luckier I get.",a:"Samuel Goldwyn"},
-  {q:"Don't watch the clock; do what it does. Keep going.",a:"Sam Levenson"},
-  {q:"Success is not final, failure is not fatal.",a:"Winston Churchill"},
-  {q:"You are never too old to set another goal.",a:"C.S. Lewis"},
-  {q:"Perseverance is not a long race; it is many short races.",a:"Walter Elliot"},
-  {q:"The only way to do great work is to love what you do.",a:"Steve Jobs"},
-  {q:"In the middle of every difficulty lies opportunity.",a:"Albert Einstein"},
-  {q:"It does not matter how slowly you go as long as you do not stop.",a:"Confucius"},
-  {q:"You miss 100% of the shots you don't take.",a:"Wayne Gretzky"},
-  {q:"Start where you are. Use what you have. Do what you can.",a:"Arthur Ashe"},
-  {q:"The best time to plant a tree was 20 years ago. The second best time is now.",a:"Chinese Proverb"},
-  {q:"What you get by achieving your goals is not as important as what you become.",a:"Thoreau"},
-  {q:"Little by little, one travels far.",a:"J.R.R. Tolkien"},
+  {q:"Just do it.",a:"Nike"},
+  {q:"Stay hungry, stay foolish.",a:"Steve Jobs"},
+  {q:"Dream big, work hard.",a:"Unknown"},
   {q:"Fall seven times, stand up eight.",a:"Japanese Proverb"},
-  {q:"The future belongs to those who believe in the beauty of their dreams.",a:"Eleanor Roosevelt"},
-  {q:"Action is the foundational key to all success.",a:"Pablo Picasso"},
-  {q:"Push yourself, because no one else is going to do it for you.",a:"Unknown"},
-  {q:"Great things never come from comfort zones.",a:"Unknown"},
+  {q:"Start where you are.",a:"Arthur Ashe"},
+  {q:"Little by little, one travels far.",a:"Tolkien"},
+  {q:"Do what you can, with what you have.",a:"Roosevelt"},
   {q:"Dream it. Wish it. Do it.",a:"Unknown"},
-  {q:"Success doesn't just find you. You have to go out and get it.",a:"Unknown"},
-  {q:"The key to success is to focus on goals, not obstacles.",a:"Unknown"},
+  {q:"Push yourself, no one else will.",a:"Unknown"},
+  {q:"Believe you can, you're halfway there.",a:"Roosevelt"},
+  {q:"It always seems impossible until done.",a:"Mandela"},
+  {q:"Great things take time.",a:"Unknown"},
+  {q:"Be the change you wish to see.",a:"Gandhi"},
+  {q:"Success is not final, failure not fatal.",a:"Churchill"},
+  {q:"Act as if what you do makes a difference.",a:"James"},
+  {q:"You are enough.",a:"Unknown"},
+  {q:"Keep going.",a:"Unknown"},
+  {q:"Hard work beats talent.",a:"Unknown"},
+  {q:"Focus on progress, not perfection.",a:"Unknown"},
+  {q:"Every expert was once a beginner.",a:"Unknown"},
+  {q:"Work hard in silence, let success make noise.",a:"Unknown"},
+  {q:"You miss 100% of shots you don't take.",a:"Gretzky"},
+  {q:"The secret of getting ahead is getting started.",a:"Twain"},
+  {q:"Do one thing every day that scares you.",a:"Eleanor Roosevelt"},
 ];
 
 const STAGE_DEFS=[
@@ -371,7 +371,7 @@ function render(){
       +'<div style="font-size:15px;color:rgba(255,255,255,0.85);">2. 선생님이 보는 곳에서 진행됩니다.</div>'
       +'</div>'
       +'<button class="btn" style="width:100%;background:#fff;color:#1a2744;border:none;border-radius:12px;padding:16px;font-size:18px;font-weight:700;cursor:pointer;margin-bottom:24px;" onclick="loadBooks()">시작</button>'
-      +'<div style="font-size:13px;color:rgba(255,255,255,0.65);font-style:italic;line-height:1.6;">&ldquo;'+q.q+'&rdquo;<br><span style="font-style:normal;font-size:12px;">'+q.a+'</span></div>'
+      +'<div style="font-size:11px;color:rgba(255,255,255,0.65);font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">&ldquo;'+q.q+'&rdquo; '+q.a+'</div>'
       +'</div>';
     return;
   }
