@@ -575,42 +575,28 @@ function render(){
     students.forEach((st,si)=>{
       const totalScore=st.units.reduce((sum,r)=>sum+(Number(r.s1score)||0)+(Number(r.s2score)||0)+(Number(r.s3score)||0)+(Number(r.s4score)||0),0);
       const cls=totalScore>=32?'score-hi':totalScore>=20?'score-mid':'score-lo';
-      html+='<div class="card" style="cursor:pointer;" data-si="'+si+'">';
-      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><div><span style="font-size:17px;font-weight:500;">'+st.name+'</span>';
+      const unitNames=st.units.map(r=>r.unit).join(', ');
+      const notice='\n\n틀린 단어는 예문쓰기 숙제 있습니다.';
+      const txtLines=st.units.map(r=>{
+        const s1w=mw(r.s1wrong),s2w=mw(r.s2wrong),s3w=mw(r.s3wrong),s4w=mw(r.s4wrong);
+        let line='유닛: '+r.unit;
+        line+='\nStage 1: '+(s1w.length>0?'오답 '+s1w.length+'개 ('+s1w.join(', ')+')':'오답 없음');
+        line+='\nStage 2: '+(s2w.length>0?'오답 '+s2w.length+'개 ('+s2w.join(', ')+')':'오답 없음');
+        if(s3w.length>0)line+='\nStage 3: 오답 '+s3w.length+'개 ('+s3w.join(', ')+')';
+        if(s4w.length>0)line+='\nStage 4: 오답 '+s4w.length+'개 ('+s4w.join(', ')+')';
+        return line;
+      }).join('\n\n');
+      const txt='[단어시험 결과]\n이름: '+st.name+'\n날짜: '+st.date+'\n\n'+txtLines+notice;
+      html+='<div class="card">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;">';
+      html+='<div><span style="font-size:17px;font-weight:500;">'+st.name+'</span>';
       html+='<span style="font-size:13px;color:#fff;background:'+(st.isToday?'#1D9E75':'#888')+';border-radius:999px;padding:2px 8px;margin-left:6px;">'+(st.isToday?'오늘':'어제')+'</span>';
       html+='<span style="font-size:13px;color:#888;margin-left:4px;">'+st.div+'</span></div>';
-      html+='<span class="score-pill '+cls+'">'+totalScore+'점</span></div>';
-      st.units.forEach(r=>{
-        const s1w=mw(r.s1wrong),s2w=mw(r.s2wrong),s3w=mw(r.s3wrong),s4w=mw(r.s4wrong);
-        const unitScore=(Number(r.s1score)||0)+(Number(r.s2score)||0)+(Number(r.s3score)||0)+(Number(r.s4score)||0);
-        html+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid #eee;">';
-        html+='<div style="font-size:15px;font-weight:500;color:#111;margin-bottom:6px;">'+r.unit+' <span style="font-size:13px;color:#888;font-weight:400;">'+unitScore+'점</span></div>';
-        // Stage 1
-        html+='<div style="font-size:13px;margin-bottom:4px;"><span style="color:#888;">Stage 1: </span>';
-        if(s1w.length>0){html+='<span style="color:#A32D2D;">오답 '+s1w.length+'개</span><br><span style="font-size:13px;color:#A32D2D;">'+s1w.join(', ')+'</span>';}
-        else{html+='<span style="color:#3B6D11;">100점</span>';}
-        html+='</div>';
-        // Stage 2
-        html+='<div style="font-size:13px;margin-bottom:4px;"><span style="color:#888;">Stage 2: </span>';
-        if(s2w.length>0){html+='<span style="color:#A32D2D;">오답 '+s2w.length+'개</span><br><span style="font-size:13px;color:#A32D2D;">'+s2w.join(', ')+'</span>';}
-        else{html+='<span style="color:#3B6D11;">100점</span>';}
-        html+='</div>';
-        // Stage 3 (있을 때만)
-        if(Number(r.s3score)>0||s3w.length>0){
-          html+='<div style="font-size:13px;margin-bottom:4px;"><span style="color:#888;">Stage 3: </span>';
-          if(s3w.length>0){html+='<span style="color:#A32D2D;">오답 '+s3w.length+'개</span><br><span style="font-size:13px;color:#A32D2D;">'+s3w.join(', ')+'</span>';}
-          else{html+='<span style="color:#3B6D11;">100점</span>';}
-          html+='</div>';
-        }
-        // Stage 4 (있을 때만)
-        if(Number(r.s4score)>0||s4w.length>0){
-          html+='<div style="font-size:13px;"><span style="color:#888;">Stage 4: </span>';
-          if(s4w.length>0){html+='<span style="color:#A32D2D;">오답 '+s4w.length+'개</span><br><span style="font-size:13px;color:#A32D2D;">'+s4w.join(', ')+'</span>';}
-          else{html+='<span style="color:#3B6D11;">100점</span>';}
-          html+='</div>';
-        }
-        html+='</div>';
-      });
+      html+='<div style="display:flex;align-items:center;gap:8px;">';
+      html+='<span class="score-pill '+cls+'">'+totalScore+'점</span>';
+      html+='<button class="btn green" style="width:auto;padding:6px 12px;margin:0;font-size:13px;" data-si="'+si+'">카톡복사</button>';
+      html+='</div></div>';
+      html+='<div style="font-size:13px;color:#888;margin-top:6px;">'+unitNames+'</div>';
       html+='</div>';
     });
     html+='<button class="btn secondary" style="margin-top:8px;" onclick="S.screen=\'login\';S.loginTab=\'login\';render()">로그아웃</button>';
@@ -618,9 +604,21 @@ function render(){
     document.querySelectorAll('[data-apid]').forEach(btn=>{
       btn.addEventListener('click',()=>approveStudent(btn.getAttribute('data-apid')));
     });
-    document.querySelectorAll('[data-si]').forEach(card=>{
-      card.addEventListener('click',()=>{
-        S.teacherSelected=students[parseInt(card.getAttribute('data-si'))];render();
+    document.querySelectorAll('[data-si]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const st=students[parseInt(btn.getAttribute('data-si'))];
+        const notice='\n\n틀린 단어는 예문쓰기 숙제 있습니다.';
+        const txtLines=st.units.map(r=>{
+          const s1w=mw(r.s1wrong),s2w=mw(r.s2wrong),s3w=mw(r.s3wrong),s4w=mw(r.s4wrong);
+          let line='유닛: '+r.unit;
+          line+='\nStage 1: '+(s1w.length>0?'오답 '+s1w.length+'개 ('+s1w.join(', ')+')':'오답 없음');
+          line+='\nStage 2: '+(s2w.length>0?'오답 '+s2w.length+'개 ('+s2w.join(', ')+')':'오답 없음');
+          if(s3w.length>0)line+='\nStage 3: 오답 '+s3w.length+'개 ('+s3w.join(', ')+')';
+          if(s4w.length>0)line+='\nStage 4: 오답 '+s4w.length+'개 ('+s4w.join(', ')+')';
+          return line;
+        }).join('\n\n');
+        const txt='[단어시험 결과]\n이름: '+st.name+'\n날짜: '+st.date+'\n\n'+txtLines+notice;
+        copyTeacherResult(txt);
       });
     });
     return;
