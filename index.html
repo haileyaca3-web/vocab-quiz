@@ -93,6 +93,33 @@ const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxmAKVf0x4D3WfQAkepaWv
 const TEACHER_ID='teacher';
 const TEACHER_PW='admin1234';
 const HIGH_SCHOOLS=['순천고1','순천여고1','강남여고1','금당고1','제일고1','복성고1','매여고2','매고2','순여고2','효천고2','금당고2'];
+const QUOTES=[
+  {q:"The secret of getting ahead is getting started.",a:"Mark Twain"},
+  {q:"It always seems impossible until it's done.",a:"Nelson Mandela"},
+  {q:"Believe you can and you're halfway there.",a:"Theodore Roosevelt"},
+  {q:"The harder I work, the luckier I get.",a:"Samuel Goldwyn"},
+  {q:"Don't watch the clock; do what it does. Keep going.",a:"Sam Levenson"},
+  {q:"Success is not final, failure is not fatal.",a:"Winston Churchill"},
+  {q:"You are never too old to set another goal.",a:"C.S. Lewis"},
+  {q:"Perseverance is not a long race; it is many short races.",a:"Walter Elliot"},
+  {q:"The only way to do great work is to love what you do.",a:"Steve Jobs"},
+  {q:"In the middle of every difficulty lies opportunity.",a:"Albert Einstein"},
+  {q:"It does not matter how slowly you go as long as you do not stop.",a:"Confucius"},
+  {q:"You miss 100% of the shots you don't take.",a:"Wayne Gretzky"},
+  {q:"Start where you are. Use what you have. Do what you can.",a:"Arthur Ashe"},
+  {q:"The best time to plant a tree was 20 years ago. The second best time is now.",a:"Chinese Proverb"},
+  {q:"What you get by achieving your goals is not as important as what you become.",a:"Thoreau"},
+  {q:"Little by little, one travels far.",a:"J.R.R. Tolkien"},
+  {q:"Fall seven times, stand up eight.",a:"Japanese Proverb"},
+  {q:"The future belongs to those who believe in the beauty of their dreams.",a:"Eleanor Roosevelt"},
+  {q:"Action is the foundational key to all success.",a:"Pablo Picasso"},
+  {q:"Push yourself, because no one else is going to do it for you.",a:"Unknown"},
+  {q:"Great things never come from comfort zones.",a:"Unknown"},
+  {q:"Dream it. Wish it. Do it.",a:"Unknown"},
+  {q:"Success doesn't just find you. You have to go out and get it.",a:"Unknown"},
+  {q:"The key to success is to focus on goals, not obstacles.",a:"Unknown"},
+];
+
 const STAGE_DEFS=[
   {id:1,name:'Stage 1',desc:'영어 → 한국어 객관식',req:true,mc:true},
   {id:2,name:'Stage 2',desc:'한국어 → 영어 객관식',req:true,mc:true},
@@ -113,7 +140,7 @@ function checkAnswer(val,correct){
 }
 
 let S={
-  screen:'login',loginTab:'login',
+  screen:'login',loginTab:'login',quoteIdx:Math.floor(Math.random()*24),
   name:'',userId:'',division:'',school:'',
   books:[],selectedBook:null,
   units:[],allWords:[],selectedUnit:null,
@@ -330,13 +357,31 @@ function render(){
   }
 
   if(S.screen==='divisionSelect'){
-    root.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;"><div><div style="font-size:18px;font-weight:500;">'+S.name+'님</div><div style="font-size:14px;color:#888;">'+S.userId+'</div></div><button style="font-size:15px;color:#888;background:none;border:none;cursor:pointer;" onclick="S.screen=\'login\';S.name=\'\';S.userId=\'\';render()">로그아웃</button></div><div class="title">선택해 주세요</div><div style="display:flex;gap:12px;margin-bottom:12px;"><button class="btn division mid" onclick="S.division=\'중등부\';loadBooks()">📚 중등부</button><button class="btn division high" onclick="S.division=\'고등부\';S.screen=\'schoolSelect\';render()">🏫 고등부</button></div><button class="btn secondary" onclick="S.screen=\'myRanking\';loadRankings()">🏆 내 기록 / 랭킹</button>';
+    root.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;"><div><div style="font-size:18px;font-weight:500;">'+S.name+'님</div><div style="font-size:14px;color:#888;">'+S.userId+'</div></div><button style="font-size:15px;color:#888;background:none;border:none;cursor:pointer;" onclick="S.screen=\'login\';S.name=\'\';S.userId=\'\';render()">로그아웃</button></div><div class="title">선택해 주세요</div><div style="display:flex;gap:12px;margin-bottom:12px;"><button class="btn division mid" onclick="S.division=\'중등부\';S.screen=\'testIntro\';S.quoteIdx=Math.floor(Math.random()*24);render()">📚 중등부</button><button class="btn division high" onclick="S.division=\'고등부\';S.screen=\'schoolSelect\';render()">🏫 고등부</button></div><button class="btn secondary" onclick="S.screen=\'myRanking\';loadRankings()">🏆 내 기록 / 랭킹</button>';
+    return;
+  }
+
+  if(S.screen==='testIntro'){
+    const q=QUOTES[S.quoteIdx];
+    root.innerHTML='<div style="background:#E8F4FD;border-radius:16px;padding:24px;">'
+      +'<div style="text-align:center;background:#111;color:#fff;border-radius:12px;padding:14px 20px;margin-bottom:20px;"><div style="font-size:20px;font-weight:700;">지금부터 단어 Test를 시작합니다</div></div>'
+      +'<div style="text-align:center;margin-bottom:16px;"><div style="font-size:19px;font-weight:600;color:#111;">'+S.name+', 오늘도 너는 최고야 💜</div></div>'
+      +'<div style="background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:20px;border:1px solid #cce4f6;">'
+      +'<div style="display:flex;gap:10px;margin-bottom:10px;"><span style="font-size:15px;font-weight:600;color:#111;min-width:20px;">1.</span><span style="font-size:15px;color:#111;">책과 노트는 모두 정리해 주세요.</span></div>'
+      +'<div style="display:flex;gap:10px;"><span style="font-size:15px;font-weight:600;color:#111;min-width:20px;">2.</span><span style="font-size:15px;color:#111;">선생님이 보는 곳에서 진행됩니다.</span></div>'
+      +'</div>'
+      +'<div style="background:#fff;border:1.5px solid #111;border-radius:12px;padding:14px 20px;margin-bottom:20px;text-align:center;">'
+      +'<div style="font-size:14px;font-weight:600;color:#111;font-style:italic;line-height:1.6;">&ldquo;'+q.q+'&rdquo;</div>'
+      +'<div style="font-size:13px;color:#111;margin-top:6px;font-weight:500;">'+q.a+'</div>'
+      +'</div>'
+      +'<button class="btn primary" onclick="loadBooks()">시작</button>'
+      +'</div>';
     return;
   }
 
   if(S.screen==='schoolSelect'){
     let html='<div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;"><button class="nbtn" onclick="S.screen=\'divisionSelect\';render()">← 뒤로</button><div class="title" style="margin-bottom:0;">학교 선택</div></div><div class="school-grid">';
-    HIGH_SCHOOLS.forEach(s=>{html+='<button class="school-btn" onclick="S.school=\''+s+'\';loadBooks()">'+s+'</button>';});
+    HIGH_SCHOOLS.forEach(s=>{html+='<button class="school-btn" onclick="S.school=\''+s+'\';S.screen=\'testIntro\';S.quoteIdx=Math.floor(Math.random()*24);render()">'+s+'</button>';});
     html+='</div>';
     root.innerHTML=html;return;
   }
