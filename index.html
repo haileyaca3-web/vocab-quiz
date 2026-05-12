@@ -607,7 +607,8 @@ function render(){
     document.querySelectorAll('[data-si]').forEach(btn=>{
       btn.addEventListener('click',()=>{
         const st=students[parseInt(btn.getAttribute('data-si'))];
-        const notice='\n\n틀린 단어는 예문쓰기 숙제 있습니다.';
+        const allWrongCount=st.units.reduce((sum,r)=>sum+mw(r.s1wrong).length+mw(r.s2wrong).length+mw(r.s3wrong).length+mw(r.s4wrong).length,0);
+        const notice=allWrongCount>0?'\n\n틀린 단어는 예문쓰기 숙제 있습니다.':'';
         const txtLines=st.units.map(r=>{
           const s1w=mw(r.s1wrong),s2w=mw(r.s2wrong),s3w=mw(r.s3wrong),s4w=mw(r.s4wrong);
           let line='유닛: '+r.unit;
